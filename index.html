@@ -3,121 +3,130 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<meta name="theme-color" content="#101619" />
-<title>THE GLASSHOUSE — V3</title>
+<meta name="theme-color" content="#15191b" />
+<title>THE GLASSHOUSE — Opening Study V4</title>
 <style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1215;touch-action:none;-webkit-user-select:none;user-select:none}
-#stage{position:fixed;inset:0;overflow:hidden;background:#0d1215}
-#game{position:absolute;inset:0;transform-origin:center center}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111517;touch-action:none;-webkit-user-select:none;user-select:none;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+#game{position:fixed;inset:0}
 canvas{display:block;width:100%;height:100%;touch-action:none}
-#start{position:fixed;inset:0;z-index:20;background:linear-gradient(180deg,#182126,#0c1114);display:flex;align-items:center;justify-content:center;color:#e3e9e6;text-align:center;transition:opacity .7s}
-#start b{font:600 13px/1 system-ui;letter-spacing:.40em}
-#start span{display:block;margin-top:14px;font:500 10px/1 system-ui;letter-spacing:.16em;opacity:.5}
-#start em{display:block;margin-top:34px;font:500 10px/1 system-ui;letter-spacing:.12em;font-style:normal;opacity:.42}
-#caption{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10;color:#d6dfdb;font:500 9px/1 system-ui;letter-spacing:.15em;text-transform:uppercase;opacity:0;transition:opacity .35s;pointer-events:none;text-shadow:0 2px 10px #000;white-space:nowrap}
-#grade{position:fixed;inset:0;pointer-events:none;z-index:9;background:radial-gradient(ellipse at 52% 42%,transparent 38%,rgba(0,0,0,.12) 72%,rgba(0,0,0,.42) 100%)}
-body.virtual-landscape #game{width:100vh;height:100vw;left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%) rotate(90deg)}
-body.virtual-landscape #grade{transform:rotate(90deg);width:100vh;height:100vw;left:50%;top:50%;right:auto;bottom:auto;translate:-50% -50%}
-body.virtual-landscape #caption{display:none}
+#rotate{position:fixed;inset:0;z-index:100;background:#0c1012;color:#cbd1cf;display:none;align-items:center;justify-content:center;text-align:center;font:500 11px/1.55 system-ui;letter-spacing:.17em;text-transform:uppercase}
+#rotate .phone{width:42px;height:70px;border:2px solid #777f7d;border-radius:8px;margin:0 auto 18px;animation:rot 1.5s ease-in-out infinite alternate}
+@keyframes rot{to{transform:rotate(90deg)}}
+#start{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#1b2326,#0d1113);color:#e6ece9;text-align:center;transition:opacity .65s}
+#start b{font-size:13px;letter-spacing:.4em;font-weight:600}#start span{display:block;margin-top:13px;font-size:10px;letter-spacing:.14em;opacity:.48}#start em{display:block;margin-top:34px;font-size:9px;letter-spacing:.13em;font-style:normal;opacity:.38}
+#caption{position:fixed;left:50%;bottom:calc(13px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:15;color:#e3e9e6;font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:0;transition:opacity .2s;text-shadow:0 2px 8px #000;pointer-events:none}
+#fade{position:fixed;inset:0;z-index:30;background:#060809;opacity:0;pointer-events:none;transition:opacity .22s}
+#grade{position:fixed;inset:0;z-index:12;pointer-events:none;background:radial-gradient(ellipse at 52% 43%,transparent 42%,rgba(0,0,0,.12) 70%,rgba(0,0,0,.46) 100%)}
+@media (orientation:portrait){#rotate{display:flex}#game,#start,#caption,#fade,#grade{visibility:hidden}}
 </style>
 </head>
 <body>
-<div id="stage"><div id="game"></div></div>
-<div id="start"><div><b>THE GLASSHOUSE</b><span>movement study · v3</span><em>touch to enter</em></div></div>
-<div id="caption"></div><div id="grade"></div>
+<div id="game"></div>
+<div id="start"><div><b>THE GLASSHOUSE</b><span>opening movement study · v4</span><em>touch to enter</em></div></div>
+<div id="caption"></div><div id="fade"></div><div id="grade"></div><div id="rotate"><div><div class="phone"></div>Rotate device<br>Landscape required</div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 
-const host=document.getElementById('game'), start=document.getElementById('start'), caption=document.getElementById('caption');
-let virtualLandscape=false;
-function applyOrientation(){virtualLandscape=innerHeight>innerWidth;document.body.classList.toggle('virtual-landscape',virtualLandscape);resize();}
+const host=document.getElementById('game'),start=document.getElementById('start'),caption=document.getElementById('caption'),fade=document.getElementById('fade');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x303b3d);scene.fog=new THREE.Fog(0x303b3d,16,46);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.04;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.appendChild(renderer.domElement);
+const camera=new THREE.OrthographicCamera();let viewH=8.6;
 
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x263239);scene.fog=new THREE.Fog(0x263239,18,45);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.appendChild(renderer.domElement);
-const camera=new THREE.OrthographicCamera();const frustum=9.2;
+scene.add(new THREE.HemisphereLight(0xb6c7c2,0x152024,1.25));
+const moon=new THREE.DirectionalLight(0xd7dfd8,2.6);moon.position.set(-8,11,8);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-24;moon.shadow.camera.right=24;moon.shadow.camera.top=15;moon.shadow.camera.bottom=-6;scene.add(moon);
+const rim=new THREE.PointLight(0x8cb9bd,16,19,2);rim.position.set(3,4,-1.5);scene.add(rim);
+const red=new THREE.PointLight(0xe44735,0,12,2);red.position.set(5.5,2,-1);scene.add(red);
+const torch=new THREE.SpotLight(0xf4e7c0,0,16,Math.PI/8,.42,1.7);torch.position.set(15,4.3,2.5);torch.target.position.set(11,1,0);scene.add(torch,torch.target);
 
-scene.add(new THREE.HemisphereLight(0xb9c9c5,0x172025,1.45));
-const sun=new THREE.DirectionalLight(0xdce4da,3.2);sun.position.set(-7,10,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-5;scene.add(sun);
-const blue=new THREE.PointLight(0x9fc7cf,18,20,2);blue.position.set(5,5,-2);scene.add(blue);
-const alarm=new THREE.PointLight(0xe06b4f,0,12,2);alarm.position.set(14,3,1.2);scene.add(alarm);
+const M=(c,r=.82,m=.05)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});const groundMat=M(0x202826,.98,0),concrete=M(0x4e5a5c,.93,.03),steel=M(0x283034,.55,.5),forest=M(0x1d2724,1,0);
+function box(x,y,z,w,h,d,mat=concrete,shadow=true){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);o.castShadow=shadow;o.receiveShadow=shadow;scene.add(o);return o}
+// Ground sections with deliberate lethal gaps
+box(-3,-.5,0,26,1,9,groundMat);box(14.6,-.5,0,7.2,1,9,groundMat);box(25,-.5,0,13,1,9,groundMat);
+// background forest layers
+for(let x=-15;x<40;x+=2.8){const h=6+Math.random()*3;const t=box(x,h/2-1,-7,.28,h,.28,forest,false);t.rotation.z=(Math.random()-.5)*.045}
+for(let x=-14;x<42;x+=5){box(x,3.5,-8.2,4.8,5+Math.random()*3,1,M(0x263431,1,0),false)}
+// facility blocks middle distance
+for(const [x,w,h] of [[-8,6,4.4],[0,7,5.3],[10,5,4.5],[21,7,5.8],[33,8,4.9]]) box(x,h/2,-4.2,w,h,1.4,M(0x465154,.93,.06),false);
+for(let x=-10;x<38;x+=3.8) box(x,3.1,-3.45,2.15,1.1,.03,new THREE.MeshBasicMaterial({color:0xb6c8c2,transparent:true,opacity:.105}),false);
+// huge foreground masses for depth/composition
+box(-12,3,3.8,1.1,7,2,M(0x101516,.96,.05));box(3.8,4.5,4.2,.65,9,2,M(0x111718,.96,.05));box(18.5,3.7,4.4,.8,8,2,M(0x101516,.96,.05));box(32,4,4.1,1.1,9,2,M(0x101516,.96,.05));
+for(let x=-9;x<36;x+=6){const beam=box(x,5.1,2.5,4.6,.16,.16,steel);beam.rotation.z=-.08}
+// props / cover / gate
+box(11.8,.65,0,1.15,1.3,1.7,M(0x4d5049,.95,.02));
+const leverBase=box(22.2,.6,0,.55,1.2,.75,steel),leverArm=box(22.42,1.42,.25,.1,.95,.1,M(0x73776e,.62,.2));leverArm.rotation.z=-.45;
+const gate=box(25.1,2.2,0,.3,4.4,5.3,steel);let gateOpen=0,leverOn=false;
+// end light
+const endLight=new THREE.PointLight(0xc8d9be,16,10,2);endLight.position.set(31,2.2,0);scene.add(endLight);
+// background vehicle, separate visual layer
+const truck=new THREE.Group();const truckBody=new THREE.Mesh(new THREE.BoxGeometry(3.2,1.25,1.25),M(0x1b2224,.72,.5));truckBody.position.y=.75;truck.add(truckBody);for(const sx of [-1,1]){const lamp=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),new THREE.MeshBasicMaterial({color:0xe94a31}));lamp.position.set(1.48,.78,sx*.38);truck.add(lamp)}truck.position.set(10,.4,-5.2);truck.visible=false;scene.add(truck);
+// pursuer silhouette
+const hunter=new THREE.Group();const hb=new THREE.Mesh(new THREE.BoxGeometry(1.35,.75,.8),M(0x151a1c,.6,.55));hb.position.y=.5;hunter.add(hb);const eye=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),new THREE.MeshBasicMaterial({color:0xe64734}));eye.position.set(.68,.55,.42);hunter.add(eye);hunter.position.set(-20,0,.3);scene.add(hunter);
+// rain
+const n=520,rp=new Float32Array(n*3),rs=new Float32Array(n);for(let i=0;i<n;i++){rp[i*3]=-14+Math.random()*55;rp[i*3+1]=Math.random()*8;rp[i*3+2]=-2+Math.random()*7;rs[i]=5+Math.random()*5}const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(rp,3));const rain=new THREE.Points(rg,new THREE.PointsMaterial({color:0xc5d7d4,size:.026,transparent:true,opacity:.18}));scene.add(rain);
 
-const M=(c,r=.8,m=.05)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
-const dark=M(0x182126,.92,.05),concrete=M(0x586266,.93,.02),metal=M(0x353e41,.55,.45),earth=M(0x222b28,1,0),wood=M(0x544b3e,.95,.02);
-function box(x,y,z,w,h,d,mat=dark,shadow=true){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);o.castShadow=shadow;o.receiveShadow=shadow;scene.add(o);return o}
+// real humanoid rig
+let model=null,mixer=null,actions={},activeAction=null,modelReady=false;
+const loader=new GLTFLoader();
+loader.load('https://threejs.org/examples/models/gltf/Soldier.glb',gltf=>{model=gltf.scene;model.scale.set(.92,.92,.92);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material=o.material.clone();o.material.roughness=.9;o.material.metalness=.02;o.material.color.multiply(new THREE.Color(0x6b7772))}}});scene.add(model);mixer=new THREE.AnimationMixer(model);for(const clip of gltf.animations){actions[clip.name.toLowerCase()]=mixer.clipAction(clip)};setAction('idle',0);modelReady=true},undefined,e=>console.error(e));
+function actionBy(names){for(const n of names)if(actions[n])return actions[n];return null}
+function setAction(kind,fadeT=.18){if(!mixer)return;let next=kind==='run'?actionBy(['run','running']):kind==='walk'?actionBy(['walk','walking']):actionBy(['idle']);if(!next)return;if(next===activeAction)return;next.reset().play();if(activeAction)activeAction.crossFadeTo(next,fadeT,true);activeAction=next}
 
-// Long readable exterior corridor: forest + abandoned climatic facility
-box(18,-.55,0,62,1,10,earth);
-for(let x=-14;x<44;x+=3.5){const trunk=box(x,3.4,-5.5,.35,7+Math.sin(x)*1.4,.35,M(0x26302c,1,0),false);trunk.rotation.z=.02*Math.sin(x*1.7)}
-for(let x=-12;x<44;x+=5){const mass=box(x,6.5,-7.1,5,7,1,M(0x2c3838,1,0),false);mass.scale.y=.7+Math.random()*.8}
-// facility wall in middle distance, intentionally brighter
-for(const [x,w,h] of [[-7,7,4.2],[3,8,5.2],[14,6,4.6],[26,9,5.6],[38,7,4.4]]) box(x,h/2,-3.4,w,h,1.8,M(0x465256,.9,.08),false);
-for(let x=-9;x<42;x+=4){box(x,3.15,-2.45,2.15,1.25,.04,new THREE.MeshBasicMaterial({color:0x9eb2ae,transparent:true,opacity:.13}),false)}
-// foreground structural rhythm
-for(let x=-10;x<44;x+=6){box(x,2.65,2.8,.22,5.3,.22,metal);box(x+1.5,5.15,1.8,3.4,.16,.16,metal).rotation.z=-.12}
-
-// puddles / reflective strips
-for(let x=-8;x<40;x+=7){const p=new THREE.Mesh(new THREE.PlaneGeometry(4.2,.8),new THREE.MeshBasicMaterial({color:0x738c90,transparent:true,opacity:.14}));p.rotation.x=-Math.PI/2;p.position.set(x,.01,.7);scene.add(p)}
-
-// simple route geometry: uninterrupted first section
-const gapStart=10.6,gapEnd=12.0;
-box(11.3,-.95,0,1.4,.15,8,M(0x0b0f11,1,0),false);
-// lever and gate only after the movement section
-const leverBase=box(17.6,.55,0,.55,1.1,.8,metal);const leverArm=box(17.8,1.35,.25,.12,.9,.12,M(0x6e746b,.55,.25));leverArm.rotation.z=-.42;
-const gate=box(21.1,2.1,0,.32,4.2,5.2,metal);let gateOpen=0,leverOn=false;
-// ending glow
-const door=box(28,1.7,0,.25,3.4,3.1,M(0x2b3436,.6,.5));const exitLight=new THREE.PointLight(0xc5d8c3,10,8,2);exitLight.position.set(29.5,2,0);scene.add(exitLight);
-
-// rain particles
-const rainGeom=new THREE.BufferGeometry(),count=650,pos=new Float32Array(count*3),speed=new Float32Array(count);
-for(let i=0;i<count;i++){pos[i*3]=-14+Math.random()*60;pos[i*3+1]=Math.random()*8;pos[i*3+2]=-2+Math.random()*7;speed[i]=4+Math.random()*5}
-rainGeom.setAttribute('position',new THREE.BufferAttribute(pos,3));const rainMat=new THREE.PointsMaterial({color:0xb8cecb,size:.025,transparent:true,opacity:.24});const rain=new THREE.Points(rainGeom,rainMat);scene.add(rain);
-
-// Character: deliberately graphic silhouette, no toy skin tones
-const hero=new THREE.Group();scene.add(hero);
-const coat=M(0x202528,.88,.02),accent=M(0x8d4437,.86,.01),skin=M(0x8a7b68,.95,0);
-const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.25,.62,5,8),coat);torso.position.y=1.08;torso.castShadow=true;hero.add(torso);
-const scarf=new THREE.Mesh(new THREE.BoxGeometry(.52,.18,.36),accent);scarf.position.set(0,1.42,0);hero.add(scarf);
-const head=new THREE.Mesh(new THREE.SphereGeometry(.245,14,12),skin);head.position.y=1.72;head.castShadow=true;hero.add(head);
-const hair=new THREE.Mesh(new THREE.SphereGeometry(.255,12,8,0,Math.PI*2,0,1.75),M(0x141718,.98,0));hair.position.set(-.01,1.79,0);hero.add(hair);
-function limb(r,len,mat){const g=new THREE.Group();const mesh=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,4,7),mat);mesh.position.y=-len/2;mesh.castShadow=true;g.add(mesh);return g}
-const al=limb(.085,.62,coat),ar=limb(.085,.62,coat),ll=limb(.105,.74,coat),lr=limb(.105,.74,coat);al.position.set(-.29,1.38,0);ar.position.set(.29,1.38,0);ll.position.set(-.13,.77,0);lr.position.set(.13,.77,0);hero.add(al,ar,ll,lr);hero.position.set(-8,0,0);
-
-const state={x:-8,y:0,vx:0,vy:0,on:true,face:1,step:0,land:0};
-const pointers=new Map();let movePointer=null,jumpQueued=false,holdQueued=false;
-function localPointer(e){let x=e.clientX,y=e.clientY;if(!virtualLandscape)return{x,y,w:innerWidth,h:innerHeight};return{x:e.clientY,y:innerWidth-e.clientX,w:innerHeight,h:innerWidth};}
-renderer.domElement.addEventListener('pointerdown',e=>{e.preventDefault();const p=localPointer(e);pointers.set(e.pointerId,{...p,sx:p.x,sy:p.y,t:performance.now()});renderer.domElement.setPointerCapture?.(e.pointerId);if(p.x<p.w*.62&&movePointer===null)movePointer=e.pointerId;else jumpQueued=true},{passive:false});
-renderer.domElement.addEventListener('pointermove',e=>{const d=pointers.get(e.pointerId);if(!d)return;e.preventDefault();const p=localPointer(e);d.x=p.x;d.y=p.y;if(p.y-d.sy<-36)jumpQueued=true},{passive:false});
-function pointerEnd(e){const d=pointers.get(e.pointerId);if(!d)return;if(performance.now()-d.t>180&&Math.hypot(d.x-d.sx,d.y-d.sy)<18)holdQueued=true;pointers.delete(e.pointerId);if(movePointer===e.pointerId)movePointer=null}renderer.domElement.addEventListener('pointerup',pointerEnd);renderer.domElement.addEventListener('pointercancel',pointerEnd);
+const state={x:-8,y:0,vx:0,vy:0,on:true,jumpConsumed:false,face:1,dead:false,checkpoint:-8,chase:false};
 const keys={};addEventListener('keydown',e=>keys[e.code]=true);addEventListener('keyup',e=>keys[e.code]=false);
+const touches=new Map();let moveTouch=null,actionTouch=null;
+const cv=renderer.domElement;cv.style.touchAction='none';
+cv.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();const d={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now(),mode:'pending'};touches.set(e.pointerId,d);cv.setPointerCapture?.(e.pointerId);if(e.clientX<innerWidth*.55&&moveTouch===null){moveTouch=e.pointerId;d.mode='move'}else if(actionTouch===null){actionTouch=e.pointerId;d.mode='action'}} ,{passive:false});
+cv.addEventListener('pointermove',e=>{const d=touches.get(e.pointerId);if(!d)return;e.preventDefault();d.x=e.clientX;d.y=e.clientY},{passive:false});
+function finishPointer(e){const d=touches.get(e.pointerId);if(!d)return;if(d.mode==='action'&&!state.dead){const held=performance.now()-d.t;const nearLever=Math.abs(state.x-22.2)<1.1&&state.y<1;if(nearLever&&held>180){interact()}else if(held<240){queueJump()}}touches.delete(e.pointerId);if(moveTouch===e.pointerId)moveTouch=null;if(actionTouch===e.pointerId)actionTouch=null}cv.addEventListener('pointerup',finishPointer);cv.addEventListener('pointercancel',finishPointer);
+let jumpQueued=false;function queueJump(){if(state.on&&!state.jumpConsumed){jumpQueued=true;state.jumpConsumed=true}}
+function interact(){if(Math.abs(state.x-22.2)<1.1&&!leverOn){leverOn=true;leverArm.rotation.z=.5;red.position.set(24,2,0);red.intensity=9}}
 
-start.addEventListener('pointerdown',async()=>{start.style.opacity=0;setTimeout(()=>start.remove(),750);try{await document.documentElement.requestFullscreen?.()}catch{}},{once:true});
+start.addEventListener('pointerdown',()=>{start.style.opacity=0;setTimeout(()=>start.remove(),700)},{once:true});
+function moveInput(){let d=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);if(moveTouch!==null){const p=touches.get(moveTouch);if(p)d=THREE.MathUtils.clamp((p.x-p.sx)/95,-1,1)}return d}
+function groundAt(x){if(x>7.7&&x<9.25)return -6;if(x>17.1&&x<18.35)return -6;return 0}
+function kill(reason='fall'){if(state.dead)return;state.dead=true;state.vx=0;fade.style.opacity='1';setTimeout(()=>{state.x=state.checkpoint;state.y=0;state.vx=state.vy=0;state.on=true;state.jumpConsumed=false;state.dead=false;hunter.position.x=-20;if(state.checkpoint<15)state.chase=false;fade.style.opacity='0'},420)}
+function updatePlayer(dt){if(state.dead)return;const d=moveInput();const max=3.55,target=d*max;state.vx=THREE.MathUtils.damp(state.vx,target,state.on?10:3.8,dt);if(Math.abs(d)<.03)state.vx=THREE.MathUtils.damp(state.vx,0,14,dt);if(Math.abs(d)>.04)state.face=Math.sign(d);if((jumpQueued||keys.Space||keys.ArrowUp)&&state.on){state.vy=5.8;state.on=false;jumpQueued=false;state.jumpConsumed=true}state.vy-=15.2*dt;state.x+=state.vx*dt;state.y+=state.vy*dt;const gy=groundAt(state.x);if(state.y<=gy){if(gy<-2){if(state.y<-3.6)kill('fall')}else{state.y=gy;state.vy=0;if(!state.on){state.on=true;state.jumpConsumed=false}}}else state.on=false;
+if(gateOpen<3.6&&state.x>24.55&&state.x<25.55&&state.y<2.6){state.x=24.5;state.vx=0}
+if(state.x>9.6&&state.checkpoint<9.6)state.checkpoint=9.65;if(state.x>18.7&&state.checkpoint<18)state.checkpoint=18.7;
+if(modelReady){model.position.set(state.x,state.y,0);model.rotation.y=state.face>0?Math.PI/2:-Math.PI/2;const sp=Math.abs(state.vx);if(!state.on){setAction('idle',.12);model.rotation.z=THREE.MathUtils.damp(model.rotation.z,-state.face*.055,8,dt)}else if(sp>2.15){setAction('run');model.rotation.z=THREE.MathUtils.damp(model.rotation.z,0,8,dt)}else if(sp>.25){setAction('walk');model.rotation.z=THREE.MathUtils.damp(model.rotation.z,0,8,dt)}else setAction('idle')}
+}
 
-let eventStage=0,eventT=0;
-function moveInput(){let d=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);if(movePointer!==null){const p=pointers.get(movePointer);if(p)d=THREE.MathUtils.clamp((p.x-p.sx)/86,-1,1)}return d}
-function groundAt(x){if(x>gapStart&&x<gapEnd)return -3;return 0}
-function updateHero(dt){const d=moveInput(),target=d*3.25;state.vx=THREE.MathUtils.damp(state.vx,target,state.on?11:4.2,dt);if(Math.abs(d)<.03)state.vx=THREE.MathUtils.damp(state.vx,0,12,dt);if(Math.abs(d)>.05)state.face=Math.sign(d);
-if((jumpQueued||keys.Space||keys.ArrowUp)&&state.on){state.vy=5.55;state.on=false;jumpQueued=false}
-state.vy-=14.2*dt;state.x+=state.vx*dt;state.y+=state.vy*dt;const gy=groundAt(state.x);if(state.y<=gy){if(gy<-1){state.x=8.9;state.y=0;state.vx=0;state.vy=0;state.on=true}else{if(!state.on&&state.vy<0)state.land=.12;state.y=gy;state.vy=0;state.on=true}}
-if(gateOpen<3.5&&state.x>20.65&&state.x<21.5&&state.y<2.4){state.x=20.6;state.vx=0}
-hero.position.set(state.x,state.y,0);hero.rotation.y=state.face<0?Math.PI:0;
-const run=Math.min(1,Math.abs(state.vx)/3.25);state.step+=Math.abs(state.vx)*dt*2.55;const s=Math.sin(state.step),s2=Math.sin(state.step+Math.PI);
-if(state.on){ll.rotation.z=s*.62*run;lr.rotation.z=s2*.62*run;al.rotation.z=s2*.42*run;ar.rotation.z=s*.42*run}else{ll.rotation.z=THREE.MathUtils.damp(ll.rotation.z,.5,7,dt);lr.rotation.z=THREE.MathUtils.damp(lr.rotation.z,-.35,7,dt);al.rotation.z=THREE.MathUtils.damp(al.rotation.z,-.2,7,dt);ar.rotation.z=THREE.MathUtils.damp(ar.rotation.z,.38,7,dt)}
-const lean=THREE.MathUtils.clamp(state.vx*.035,-.12,.12);torso.rotation.z=THREE.MathUtils.damp(torso.rotation.z,-lean*state.face,9,dt);torso.position.y=1.08-Math.abs(Math.sin(state.step*2))*.032*run+(state.land>0?-.06:0);head.position.y=1.72-Math.abs(Math.sin(state.step*2))*.018*run;state.land=Math.max(0,state.land-dt);
+let seq=0,seqT=0;
+function director(dt,t){seqT+=dt;
+// authored shot 1: player emerges, camera stays slightly ahead
+if(seq===0&&state.x>-3.3){seq=1;seqT=0;truck.visible=true;truck.position.x=11;red.position.set(5,1.4,-4.5);red.intensity=8}
+// background vehicle crosses while camera deliberately resists following
+if(seq===1){truck.position.x-=2.6*dt;red.intensity=6+Math.sin(t*9)*1.6;if(seqT>2.6){seq=2;seqT=0;red.intensity=0}}
+// light sweep / visual threat after first checkpoint
+if(seq===2&&state.x>10.4){seq=3;seqT=0;torch.intensity=16}
+if(seq===3){torch.position.x=14+Math.sin(seqT*.72)*5;torch.target.position.x=11+Math.sin(seqT*.72)*5;if(seqT>4.4){torch.intensity=0;seq=4}}
+// chase starts before second gap
+if(seq===4&&state.x>14.4){seq=5;state.chase=true;hunter.position.x=state.x-6.5;state.checkpoint=13.8}
+if(state.chase&&!state.dead){hunter.position.x+=4.1*dt;hunter.position.y=.05;if(hunter.position.x>state.x-.6)kill('caught');if(state.x>19.1){state.chase=false;hunter.position.x=-20;seq=6}}
+// lever gate
+const nearLever=Math.abs(state.x-22.2)<1.15&&state.y<1;caption.textContent=nearLever?'hold right side':'';caption.style.opacity=nearLever?.56:0;
+if(leverOn){gateOpen=THREE.MathUtils.damp(gateOpen,4.6,2.5,dt);gate.position.y=2.2+gateOpen;red.intensity=5+Math.sin(t*4)*1.5}
+// rain
+const a=rain.geometry.attributes.position.array;for(let i=0;i<n;i++){a[i*3+1]-=rs[i]*dt;if(a[i*3+1]<-.2)a[i*3+1]=8}rain.geometry.attributes.position.needsUpdate=true;
 }
-function logic(dt,t){eventT+=dt;
-// authored event: player only has to run. Lights wake up around them.
-if(eventStage===0&&state.x>-2){eventStage=1;eventT=0;alarm.intensity=7}
-if(eventStage===1){alarm.intensity=5+Math.sin(t*18)*3;if(eventT>1.1){eventStage=2;alarm.intensity=0;blue.intensity=26}}
-if(eventStage===2&&state.x>6){eventStage=3;eventT=0;sun.intensity=1.6;scene.fog.far=34}
-if(eventStage===3&&eventT>.35&&eventT<.9){camera.position.y+=.05*Math.sin(t*60)}
-const nearLever=Math.abs(state.x-17.7)<1.15&&state.y<1;if(nearLever){caption.textContent='hold';caption.style.opacity=.52}else caption.style.opacity=0;
-if(holdQueued&&nearLever&&!leverOn){leverOn=true;leverArm.rotation.z=.52;alarm.position.set(20.3,2.3,.9);alarm.intensity=12;holdQueued=false}
-if(leverOn){gateOpen=THREE.MathUtils.damp(gateOpen,4.4,2.4,dt);gate.position.y=2.1+gateOpen;alarm.intensity=7+Math.sin(t*4)*1.5}
-const a=rain.geometry.attributes.position.array;for(let i=0;i<count;i++){a[i*3+1]-=speed[i]*dt;if(a[i*3+1]<-.2)a[i*3+1]=8}rain.geometry.attributes.position.needsUpdate=true;
-}
-function updateCamera(dt){const lookAhead=state.face*.85+state.vx*.12;camera.position.x=THREE.MathUtils.damp(camera.position.x,state.x+lookAhead,2.8,dt);camera.position.y=THREE.MathUtils.damp(camera.position.y,3.15+Math.max(0,state.y)*.18,3,dt);camera.position.z=12.5;camera.lookAt(camera.position.x+.1,1.8+state.y*.12,0)}
-function resize(){const w=virtualLandscape?innerHeight:innerWidth,h=virtualLandscape?innerWidth:innerHeight;const a=w/h;camera.left=-frustum*a/2;camera.right=frustum*a/2;camera.top=frustum/2;camera.bottom=-frustum/2;camera.near=.1;camera.far=100;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(w,h,false)}
-addEventListener('resize',applyOrientation);applyOrientation();camera.position.set(-7,3.2,12.5);
-let last=performance.now();function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.033);last=now;const t=now/1000;updateHero(dt);logic(dt,t);updateCamera(dt);renderer.render(scene,camera)}requestAnimationFrame(frame);
+
+function cameraDirector(dt){let tx=state.x+.8*state.face,ty=3.1,zoom=8.6,lookY=1.75;
+// intro: slower, broader establishing shot
+if(state.x<-2){tx=state.x*.55-3.4;zoom=9.2;ty=3.25}
+// vehicle reveal: camera nearly locks to composition
+else if(seq===1){tx=1.2;zoom=9.35;ty=3.35}
+// first jump: anticipate landing side
+else if(state.x>5.2&&state.x<10){tx=8.8;zoom=8.2;ty=3.0}
+// torch sequence: camera falls behind and makes foreground larger
+else if(seq===3){tx=state.x+.25;zoom=7.9;ty=3.05}
+// chase: give player space to run into
+else if(state.chase){tx=state.x+2.25;zoom=8.05;ty=3.0}
+// lever shot: hold wider to show lever + gate simultaneously
+else if(state.x>20.2&&state.x<25.4){tx=23.0;zoom=9.0;ty=3.25}
+viewH=THREE.MathUtils.damp(viewH,zoom,2.2,dt);const a=innerWidth/innerHeight;camera.left=-viewH*a/2;camera.right=viewH*a/2;camera.top=viewH/2;camera.bottom=-viewH/2;camera.updateProjectionMatrix();camera.position.x=THREE.MathUtils.damp(camera.position.x,tx,2.2,dt);camera.position.y=THREE.MathUtils.damp(camera.position.y,ty,2.4,dt);camera.position.z=12.5;camera.lookAt(camera.position.x+.05,lookY+Math.max(0,state.y)*.12,0)}
+
+function resize(){renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);const a=innerWidth/innerHeight;camera.left=-viewH*a/2;camera.right=viewH*a/2;camera.top=viewH/2;camera.bottom=-viewH/2;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();camera.position.set(-7,3.2,12.5);
+let last=performance.now();function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.033);last=now;const t=now/1000;updatePlayer(dt);director(dt,t);cameraDirector(dt);if(mixer)mixer.update(dt);renderer.render(scene,camera)}requestAnimationFrame(frame);
 </script>
 </body></html>
